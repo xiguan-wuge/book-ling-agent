@@ -11,7 +11,7 @@
     "dist/"
   ],
   "scripts": {
-    "start": "tsx src/ling.ts",
+    "start": "tsx --env-file=../.env.local src/ling.ts",
     "build": "tsc",
     "prepublishOnly": "npm run build"
   },

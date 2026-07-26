@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "start": "tsx src/ling.ts",
+    "start": "tsx --env-file=../.env.local src/ling.ts",
     "build": "tsc",
     "test": "node --import tsx --test src/tools/__tests__/tools.test.ts"
   },

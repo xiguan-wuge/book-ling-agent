@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "start": "tsx src/ling.ts",
+    "start": "tsx --env-file=../.env.local src/ling.ts",
     "sqlite-server": "tsx src/mcp-servers/sqlite-server.ts",
     "build": "tsc"
   },

@@ -17,12 +17,7 @@ function loadConfigFile(): Partial<ProviderConfig> | null {
 }
 
 /**
- * 配置优先级：命令行参数 > 环境变量 > .ling.json > 默认值
- *
- * 这个顺序很重要：
- * - 日常开发用 .ling.json，不用每次敲参数
- * - CI 环境用环境变量，不用提交配置文件
- * - 临时切换用命令行参数，覆盖一切
+ * 配置优先级：命令行参数 > 环境变量（由 code/.env.local 通过 --env-file 加载）> .ling.json > 默认值
  */
 export function resolveConfig(cliArgs?: Partial<ProviderConfig>): ProviderConfig {
   const fileConfig = loadConfigFile();
@@ -34,7 +29,7 @@ export function resolveConfig(cliArgs?: Partial<ProviderConfig>): ProviderConfig
 
   const apiKey = cliArgs?.apiKey
     || process.env.LING_API_KEY
-    || process.env.LLM_API_KEY  // 兼容 ch01 的环境变量
+    || process.env.LLM_API_KEY
     || fileConfig?.apiKey
     || "";
 

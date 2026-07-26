@@ -146,6 +146,7 @@ venv/
 .env.local
 .env.*.local
 .env.production
+code/.env.local
 
 # OS / IDE
 .DS_Store
@@ -174,4 +175,3 @@ examples/*/*.sqlite*
 # 大文件归档
 *.tgz
 *.tar.gz
-code/ch01/api.local.ts
