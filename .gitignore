@@ -174,3 +174,4 @@ examples/*/*.sqlite*
 # 大文件归档
 *.tgz
 *.tar.gz
+code/ch01/api.local.ts

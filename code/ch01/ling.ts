@@ -1,16 +1,17 @@
 import OpenAI from "openai";
 import { readFileSync } from "fs";
 import { execSync } from "child_process";
+import { llmConfig } from './config.local.js';
 
 type Tool = OpenAI.Chat.ChatCompletionTool;
 type Message = OpenAI.Chat.ChatCompletionMessageParam;
 type ToolCall = OpenAI.Chat.ChatCompletionMessageToolCall;
 
 const client = new OpenAI({
-  apiKey: process.env.LLM_API_KEY,
-  baseURL: process.env.LLM_BASE_URL || "https://ark.cn-beijing.volces.com/api/v3",
+  apiKey: process.env.LLM_API_KEY || llmConfig.apiKey,
+  baseURL: process.env.LLM_BASE_URL || llmConfig.baseURL,
 });
-const MODEL = process.env.LLM_MODEL || "doubao-1.5-pro-32k-250115";
+const MODEL = process.env.LLM_MODEL || llmConfig.model;
 
 const tools: Tool[] = [
   {

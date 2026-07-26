@@ -6,15 +6,16 @@ import { readFileSync } from "fs";
 import { execSync } from "child_process";
 import { createInterface } from "readline";
 import { buildSystemPrompt, calculateBudget, estimateTokens, Compactor } from "./context/index.js";
+import { llmConfig } from '../../ch01/config.local.ts';
 
 type Tool = OpenAI.Chat.ChatCompletionTool;
 type Message = OpenAI.Chat.ChatCompletionMessageParam;
 
 const client = new OpenAI({
-  apiKey: process.env.LLM_API_KEY,
-  baseURL: process.env.LLM_BASE_URL || "https://ark.cn-beijing.volces.com/api/v3",
+  apiKey: process.env.OPENAI_API_KEY || llmConfig.apiKey,
+  baseURL: process.env.OPENAI_BASEURL || llmConfig.baseURL,
 });
-const MODEL = process.env.LLM_MODEL || "doubao-1.5-pro-32k-250115";
+const MODEL = process.env.LLM_MODEL || llmConfig.model;
 const CONTEXT_WINDOW = parseInt(process.env.CONTEXT_WINDOW || "32000", 10);
 
 // ===== 工具定义 =====
