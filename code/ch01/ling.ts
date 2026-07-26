@@ -1,12 +1,11 @@
 import OpenAI from "openai";
 import { readFileSync } from "fs";
 import { execSync } from "child_process";
-import { llmConfig } from './config.local.js';
+import { llmConfig } from './config.local.ts';
 
 type Tool = OpenAI.Chat.ChatCompletionTool;
 type Message = OpenAI.Chat.ChatCompletionMessageParam;
 type ToolCall = OpenAI.Chat.ChatCompletionMessageToolCall;
-
 const client = new OpenAI({
   apiKey: process.env.LLM_API_KEY || llmConfig.apiKey,
   baseURL: process.env.LLM_BASE_URL || llmConfig.baseURL,
@@ -14,7 +13,7 @@ const client = new OpenAI({
 const MODEL = process.env.LLM_MODEL || llmConfig.model;
 
 const tools: Tool[] = [
-  {
+  { 
     type: "function",
     function: {
       name: "read_file",
@@ -40,13 +39,36 @@ const tools: Tool[] = [
   },
 ];
 
+// Windows 中文系统下 cmd.exe 默认输出 GBK 编码，chcp 65001 对管道输出不可靠，
+// 改为获取 Buffer 后智能解码：先尝试 UTF-8，若含替换字符则回退到 GBK
+function decodeBuffer(buffer: Buffer): string {
+  if (process.platform === "win32") {
+    const text = new TextDecoder("utf-8").decode(buffer);
+    if (text.includes("\uFFFD")) {
+      try {
+        return new TextDecoder("gbk").decode(buffer);
+      } catch {
+        return text;
+      }
+    }
+    return text;
+  }
+  return buffer.toString("utf-8");
+}
+
 function executeTool(name: string, args: Record<string, string>): string {
   try {
     if (name === "read_file") return readFileSync(args.file_path, "utf-8");
-    if (name === "run_command") return execSync(args.command, { encoding: "utf-8", timeout: 30000 });
+    if (name === "run_command") {
+      const buffer = execSync(args.command, { timeout: 30000 });
+      return decodeBuffer(buffer);
+    }
     return `Unknown tool: ${name}`;
   } catch (e: any) {
-    return `Error: ${e.message}`;
+    let msg = `Error: ${e.message}`;
+    if (e.stderr) msg += `\n${decodeBuffer(e.stderr)}`;
+    if (e.stdout) msg += `\n${decodeBuffer(e.stdout)}`;
+    return msg;
   }
 }
 
