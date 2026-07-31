@@ -64,7 +64,7 @@ async function main() {
   });
 
   const history: Message[] = [];
-  console.log("Ling Agent (ch03) — type your request, Ctrl+C to exit\n");
+  console.log("Ling Agent (ch03) - type your request, Ctrl+C to exit\n");
 
   const prompt = () => {
     rl.question("You: ", async (input) => {

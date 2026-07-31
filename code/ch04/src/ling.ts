@@ -6,16 +6,16 @@ import { readFileSync } from "fs";
 import { execSync } from "child_process";
 import { createInterface } from "readline";
 import { buildSystemPrompt, calculateBudget, estimateTokens, Compactor } from "./context/index.js";
-import { llmConfig } from '../../ch01/config.local.ts';
 
 type Tool = OpenAI.Chat.ChatCompletionTool;
 type Message = OpenAI.Chat.ChatCompletionMessageParam;
 
+// 配置统一从环境变量读取（由 code/.env.local 通过 --env-file 加载）
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || llmConfig.apiKey,
-  baseURL: process.env.OPENAI_BASEURL || llmConfig.baseURL,
+  apiKey: process.env.OPENAI_API_KEY || process.env.LLM_API_KEY || "",
+  baseURL: process.env.OPENAI_BASEURL || process.env.LLM_BASE_URL || "https://ark.cn-beijing.volces.com/api/plan/v3",
 });
-const MODEL = process.env.LLM_MODEL || llmConfig.model;
+const MODEL = process.env.LLM_MODEL || "glm-5.2";
 const CONTEXT_WINDOW = parseInt(process.env.CONTEXT_WINDOW || "32000", 10);
 
 // ===== 工具定义 =====
@@ -47,13 +47,38 @@ const tools: Tool[] = [
   },
 ];
 
+// Windows 中文系统下 cmd.exe 默认输出 GBK 编码，
+// execSync 不设 encoding 时返回 Buffer；错误对象的 stderr/stdout 也是 Buffer
+function decodeBuffer(buf: Buffer | string | undefined): string {
+  if (!buf) return "";
+  const buffer = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+  if (process.platform === "win32") {
+    const text = new TextDecoder("utf-8").decode(buffer);
+    if (text.includes("\uFFFD")) {
+      try {
+        return new TextDecoder("gbk").decode(buffer);
+      } catch {
+        return text;
+      }
+    }
+    return text;
+  }
+  return buffer.toString("utf-8");
+}
+
 function executeTool(name: string, args: Record<string, string>): string {
   try {
     if (name === "read_file") return readFileSync(args.file_path, "utf-8");
-    if (name === "run_command") return execSync(args.command, { encoding: "utf-8", timeout: 30000 });
+    if (name === "run_command") {
+      const buffer = execSync(args.command, { timeout: 30000 });
+      return decodeBuffer(buffer);
+    }
     return `Unknown tool: ${name}`;
   } catch (e: any) {
-    return `Error: ${e.message}`;
+    let msg = `Error: ${decodeBuffer(e.message)}`;
+    if (e.stderr) msg += `\n${decodeBuffer(e.stderr)}`;
+    if (e.stdout) msg += `\n${decodeBuffer(e.stdout)}`;
+    return msg;
   }
 }
 
