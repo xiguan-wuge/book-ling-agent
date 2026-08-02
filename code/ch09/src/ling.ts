@@ -15,6 +15,25 @@ import type { ToolEntry, ToolRegistry, SchedulerTask } from "./agents/index.js";
 
 const provider = initProvider();
 
+// Windows 中文系统下 cmd.exe 默认输出 GBK 编码，
+// execSync 不设 encoding 时返回 Buffer；错误对象的 stderr/stdout 也是 Buffer
+function decodeBuffer(buf: Buffer | string | undefined): string {
+  if (!buf) return "";
+  const buffer = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+  if (process.platform === "win32") {
+    const text = new TextDecoder("utf-8").decode(buffer);
+    if (text.includes("\uFFFD")) {
+      try {
+        return new TextDecoder("gbk").decode(buffer);
+      } catch {
+        return text;
+      }
+    }
+    return text;
+  }
+  return buffer.toString("utf-8");
+}
+
 // ---- 工具注册表 ----
 
 function buildToolRegistry(): ToolRegistry {
@@ -76,12 +95,13 @@ function buildToolRegistry(): ToolRegistry {
     execute: async (params) => {
       const { execSync } = await import("node:child_process");
       try {
-        return execSync(params.command as string, {
-          encoding: "utf-8",
-          timeout: 30_000,
-        });
+        const buffer = execSync(params.command as string, { timeout: 30_000 });
+        return decodeBuffer(buffer);
       } catch (err: any) {
-        return `Error: ${err.message}`;
+        let msg = `Error: ${decodeBuffer(err.message)}`;
+        if (err.stderr) msg += `\n${decodeBuffer(err.stderr)}`;
+        if (err.stdout) msg += `\n${decodeBuffer(err.stdout)}`;
+        return msg;
       }
     },
   });
@@ -104,11 +124,9 @@ function buildToolRegistry(): ToolRegistry {
       const { execSync } = await import("node:child_process");
       const path = (params.path as string) || ".";
       try {
-        return execSync(`grep -r "${params.pattern}" ${path} --include="*.ts" -l`, {
-          encoding: "utf-8",
-          timeout: 10_000,
-        });
-      } catch {
+        const buffer = execSync(`grep -r "${params.pattern}" ${path} --include="*.ts" -l`, { timeout: 10_000 });
+        return decodeBuffer(buffer);
+      } catch (err: any) {
         return "No matches found.";
       }
     },
@@ -128,10 +146,8 @@ function buildToolRegistry(): ToolRegistry {
     execute: async (params) => {
       const { execSync } = await import("node:child_process");
       try {
-        return execSync(`find . -name "${params.pattern}" -type f`, {
-          encoding: "utf-8",
-          timeout: 10_000,
-        });
+        const buffer = execSync(`find . -name "${params.pattern}" -type f`, { timeout: 10_000 });
+        return decodeBuffer(buffer);
       } catch {
         return "No files found.";
       }

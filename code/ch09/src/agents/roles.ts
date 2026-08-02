@@ -8,12 +8,12 @@ const SUB_MODEL = process.env.LLM_MODEL || "gpt-4o-mini";
 export function planAgent(task: string): SubAgentConfig {
   return {
     name: "plan-agent",
-    role: `You are a planning agent. Your job is to analyze the codebase and produce a migration plan.
+    role: `你是一个规划 Agent，你的任务是分析代码库并制定迁移计划。
 
-Rules:
-- You can ONLY read files and search code. You CANNOT write or execute anything.
-- Output a structured plan: which files need changes, what changes, and in what order.
-- Be specific. Don't say "update the routes", say "change app.get() to app.get() with Hono syntax in src/routes/users.ts lines 10-25".
+规则：
+- 你只能读取文件和搜索代码，不能写入或执行任何操作。
+- 输出结构化的计划：哪些文件需要修改、具体改什么、按什么顺序。
+- 要具体。不要说"更新路由"，要说"在 src/routes/users.ts 第 10-25 行，将 app.get() 改为 Hono 语法的 app.get()"。
 
 Task: ${task}`,
     tools: ["read_file", "grep", "glob", "list_files"],
@@ -30,12 +30,12 @@ export function codeAgent(
 ): SubAgentConfig {
   return {
     name,
-    role: `You are a code agent. Your job is to make specific code changes.
+    role: `你是一个代码 Agent，你的任务是执行具体的代码修改。
 
-Rules:
-- Follow the plan exactly. Don't improvise.
-- After editing, verify the change by reading the file back.
-- If something doesn't work, fix it — don't leave broken code.
+规则：
+- 严格按照计划执行，不要自行发挥。
+- 修改后要读回文件验证改动是否正确。
+- 如果有问题就修复，不要留下无法运行的代码。
 
 Task: ${task}`,
     tools,
@@ -47,12 +47,12 @@ Task: ${task}`,
 export function reviewAgent(focus: string): SubAgentConfig {
   return {
     name: "review-agent",
-    role: `You are a code review agent. Your job is to review recent changes for correctness and consistency.
+    role: `你是一个代码审查 Agent，你的任务是审查近期的改动是否正确且一致。
 
-Rules:
-- You can ONLY read files and search. You CANNOT modify anything.
-- Check for: import consistency, API compatibility, missing error handling, type errors.
-- Output a review report with PASS / FAIL and specific issues found.
+规则：
+- 你只能读取文件和搜索代码，不能修改任何内容。
+- 检查项：import 一致性、API 兼容性、缺失的错误处理、类型错误。
+- 输出审查报告，标注 通过 / 不通过，并列出具体问题。
 
 Focus: ${focus}`,
     tools: ["read_file", "grep", "glob"],
