@@ -10,7 +10,12 @@ import {
 import type { McpRegisteredTool } from "./mcp/index.js";
 import { randomUUID } from "node:crypto";
 
-const openai = new OpenAI();
+// 公共配置：apiKey 统一从环境变量读取（由 code/.env.local 通过 --env-file 加载）
+const openai = new OpenAI({
+  apiKey: process.env.LLM_API_KEY || '',
+  baseURL: process.env.LLM_BASE_URL || 'https://ark.cn-beijing.volces.com/api/plan/v3',
+});
+const MODEL = process.env.LLM_MODEL || 'glm-5.2';
 
 /** 内置工具（简化版，前几章已有完整实现） */
 const BUILTIN_TOOLS: OpenAI.ChatCompletionTool[] = [
@@ -140,7 +145,7 @@ async function main() {
   // Agent loop
   while (true) {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: MODEL,
       messages,
       tools: allTools,
     });

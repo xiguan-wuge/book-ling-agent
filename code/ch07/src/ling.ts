@@ -6,12 +6,13 @@ import * as readline from "readline";
 import { execSync } from "child_process";
 import { SessionStore, MemoryStore } from "./session/index.js";
 import type { Session, Message, SessionMetadata } from "./session/index.js";
+import { llmConfig } from "../../ch01/config.local.ts";
 
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  baseURL: process.env.OPENAI_BASE_URL,
+  apiKey: process.env.LLM_API_KEY || llmConfig.apiKey,
+  baseURL: process.env.LLM_BASE_URL || llmConfig.baseURL,
 });
-const model = process.env.LLM_MODEL || "gpt-4o";
+const model = process.env.LLM_MODEL || llmConfig.model;
 const store = new SessionStore();
 
 const systemPrompt = `You are Ling, a coding assistant.
